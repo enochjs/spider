@@ -16,7 +16,6 @@ class Mp3Download extends Concurrency<Task> {
     super(max);
     const dir = path.resolve(__dirname, `../mp3/result.txt`);
     this.resolveList = fs.readFileSync(dir).toString();
-    console.log(this.resolveList);
   }
 
   async resolveFile(taskPath: string) {
@@ -31,7 +30,6 @@ class Mp3Download extends Concurrency<Task> {
       return;
     }
     const writeStream = fs.createWriteStream(task.path);
-    console.log("donwload resource", task.url, task.path);
     const result = await new Promise((resolve) => {
       axios({
         method: "get",
@@ -41,7 +39,7 @@ class Mp3Download extends Concurrency<Task> {
         .then((response) => {
           response.data.pipe(writeStream);
           response.data.on("data", async () => {
-            console.log("downing");
+            console.log(task.path, "downing ===>");
           });
           response.data.on("end", async () => {
             await this.resolveFile(task.path);
@@ -95,21 +93,13 @@ class Mp3Download extends Concurrency<Task> {
           await this.resolveFile(task.path);
         }
         return;
-      } else {
-        // await appendFile(dir, `${task.path} \n`);
       }
     } catch (error) {
-      // await appendFile(dir, `${task.path} \n`);
       console.log("error", error);
     }
   }
 
   async download(task: Task) {
-    await this.checkeStat(task);
-  }
-
-  async mp3Download(task: Task) {
-    // await this.checkeStat(task);
     if (this.resolveList.includes(task.path)) {
       console.log("path aleardy resolved", task.path);
       return true;
@@ -158,7 +148,6 @@ class Mp3Download extends Concurrency<Task> {
       const nameEn = content.nameEn;
       const dirEn = path.resolve(__dirname, `../mp3/english/${nameEn}`);
       const dirCn = path.resolve(__dirname, `../mp3/chinese/${nameCn}`);
-      console.log("....", dirCn);
       if (!fs.existsSync(dirEn)) {
         fs.mkdirSync(dirEn);
       }
@@ -191,4 +180,5 @@ class Mp3Download extends Concurrency<Task> {
 
 const downloadMp3 = new Mp3Download(3);
 downloadMp3.generateTask();
+// downloadMp3.registerExecFn(downloadMp3.checkeStat);
 downloadMp3.start();

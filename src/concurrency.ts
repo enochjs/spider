@@ -4,6 +4,8 @@ class Concurrency<T> {
   // 任务数
   private taskList: T[];
 
+  private registerFn: null | Function = null;
+
   constructor(max: number) {
     this.max = max;
     this.taskList = [];
@@ -28,6 +30,10 @@ class Concurrency<T> {
     return true;
   }
 
+  registerExecFn(fn: (task: T) => Promise<unknown>) {
+    this.registerFn = fn;
+  }
+
   async onError(error: any, task: T) {}
 
   async onSuccess(result: any, task: T) {}
@@ -36,7 +42,8 @@ class Concurrency<T> {
     if (!task) {
       return;
     }
-    const result = await this.download(task);
+    const fn = this.registerFn ? this.registerFn : this.download;
+    const result = await fn.call(this, task);
     console.log(`remain ${this.taskList.length} task to excute`);
     this.onSuccess(result, task);
     const nextTask = this.taskList.pop();
